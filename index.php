@@ -1,7 +1,7 @@
 <?php
 // index.php — redirector page
 
-require_once 'auth.php'; // include firebase auth config
+require_once __DIR__ . '/includes/auth.php';; // include firebase auth config
 
 // check if user is logged in
 if (isset($_SESSION['user'])) {

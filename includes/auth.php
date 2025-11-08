@@ -3,7 +3,7 @@
 // handles signup, login, logout, and session management using firebase
 
 session_start();
-require_once 'firebase.php';
+require_once __DIR__ . '/firebase.php';
 
 // UPDATE1- function to validate email domain (part1/2)
 function validate_email_domain($email, $allowed_domains = ['.edu', '.edu.my', 'gmail.com']) //ATTENTION-over here can add other domain for email verification
