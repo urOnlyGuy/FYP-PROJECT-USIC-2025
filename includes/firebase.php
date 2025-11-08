@@ -2,9 +2,28 @@
 //firebase.php
 // all firebase-related configuration and basic helper functions
 
-// your firebase project settings
-define('FIREBASE_PROJECT_URL', 'https://YOUR_PROJECT_ID.firebaseio.com/'); // end with '/'
-define('FIREBASE_API_KEY', 'YOUR_FIREBASE_WEB_API_KEY'); // from firebase console
+// ========================================
+// YOUR FIREBASE CONFIGURATION
+// ========================================
+
+// 1. Your Firebase Web API Key (from your config)
+define('FIREBASE_API_KEY', 'AIzaSyDUfPsu203EsybADij95btKSVZoVkMtUp4');
+
+// 2. Your Realtime Database URL
+//    OPTION A: If using default database (most common)
+define('FIREBASE_PROJECT_URL', 'https://uptmstudentinfocenter-usic-default-rtdb.asia-southeast1.firebasedatabase.app/');
+
+//    OPTION B: If the above doesn't work, try this instead:
+//    define('FIREBASE_PROJECT_URL', 'https://uptmstudentinfocenter-usic.firebaseio.com/');
+
+// ========================================
+// IMPORTANT: Make sure the URL ends with '/'
+// To verify your database URL:
+// 1. Go to Firebase Console → Realtime Database
+// 2. Look at the URL shown at the top of the database
+// 3. Copy that exact URL and paste it above (with trailing /)
+// ========================================
+
 
 // base functions for firebase REST API interaction
 function firebase_request($method, $path, $data = null) {
@@ -79,7 +98,6 @@ function firebase_login($email, $password) {
 
     return json_decode($response, true);
 }
-
 /* Explanation:
 register_user() → Signs up user in Firebase Auth and stores user profile in Realtime Database under /users/{localId}.
 
