@@ -6,7 +6,7 @@ session_start();
 require_once 'firebase.php';
 
 // UPDATE1- function to validate email domain (part1/2)
-function validate_email_domain($email, $allowed_domains = ['.edu', '.edu.my']) //ATTENTION-over here can add other domain for email verification
+function validate_email_domain($email, $allowed_domains = ['.edu', '.edu.my', 'gmail.com']) //ATTENTION-over here can add other domain for email verification
 	{
 		$email = strtolower($email);
 		
