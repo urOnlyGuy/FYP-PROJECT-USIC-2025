@@ -2,28 +2,48 @@
 //firebase.php
 // all firebase-related configuration and basic helper functions
 
-// ========================================
-// YOUR FIREBASE CONFIGURATION
-// ========================================
+//START of SecurityUpdate1- for safer api key approach
+//create your own .env file with your own key please. refer .env.example for template
 
-// 1. Your Firebase Web API Key (from your config)
-define('FIREBASE_API_KEY', 'AIzaSyDUfPsu203EsybADij95btKSVZoVkMtUp4');
+// Load environment variables from .env file
+function loadEnv($path) {
+    if (!file_exists($path)) {
+        throw new Exception('.env file not found. Please create one based on .env.example');
+    }
+    
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        
+        // Parse KEY=VALUE
+        list($key, $value) = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value);
+        
+        // Remove quotes if present
+        $value = trim($value, '"\'');
+        
+        // Set environment variable
+        putenv("$key=$value");
+        $_ENV[$key] = $value;
+    }
+}
 
-// 2. Your Realtime Database URL
-//    OPTION A: If using default database (most common)
-define('FIREBASE_PROJECT_URL', 'https://uptmstudentinfocenter-usic-default-rtdb.asia-southeast1.firebasedatabase.app/');
+// Load .env file
+loadEnv(__DIR__ . '/../.env');
 
-//    OPTION B: If the above doesn't work, try this instead:
-//    define('FIREBASE_PROJECT_URL', 'https://uptmstudentinfocenter-usic.firebaseio.com/');
+// Get configuration from environment variables
+define('FIREBASE_PROJECT_URL', getenv('FIREBASE_PROJECT_URL'));
+define('FIREBASE_API_KEY', getenv('FIREBASE_API_KEY'));
 
-// ========================================
-// IMPORTANT: Make sure the URL ends with '/'
-// To verify your database URL:
-// 1. Go to Firebase Console → Realtime Database
-// 2. Look at the URL shown at the top of the database
-// 3. Copy that exact URL and paste it above (with trailing /)
-// ========================================
-
+// Validate that keys are loaded
+if (!FIREBASE_PROJECT_URL || !FIREBASE_API_KEY) {
+    throw new Exception('Firebase configuration not found. Check your .env file.');
+}
+//END of SecurityUpdate1
 
 // base functions for firebase REST API interaction
 function firebase_request($method, $path, $data = null) {
