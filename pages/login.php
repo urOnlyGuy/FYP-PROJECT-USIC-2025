@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = $result['message'];
 
     if ($result['success']) {
-        header('Location: dashboard.php');
+        header('Location: /admin/dashboard.php');
         exit;
     }
 }
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </form>
 
                         <p class="text-center mt-3 mb-0">
-                            New to USIC? <a href="signup.php">Sign up here</a>
+                            New to USIC? <a href="register.php">Sign up here</a>
                         </p>
                     </div>
                 </div>
