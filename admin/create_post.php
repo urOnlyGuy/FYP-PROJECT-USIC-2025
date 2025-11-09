@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Post - UPTM Student Info Center</title>
+    <title>Create Post | USIC - UPTM Student Info Center</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
@@ -199,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <!-- Content (Rich Text Editor) -->
                             <div class="mb-3">
                                 <label class="form-label">Content <span class="text-danger">*</span></label>
-                                <textarea id="content" name="content" required></textarea>
+                                <textarea id="content" name="content"></textarea>
                                 <small class="text-muted">Use the editor toolbar to format your content.</small>
                             </div>
 
@@ -295,6 +295,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 alert('Please enter a post title');
                 return false;
             }
+
+            // START **NEW: Validate TinyMCE content** by gemini
+            // tinymce.get('content') gets the editor instance
+            const editor = tinymce.get('content');
+            if (editor && editor.getContent().trim() === '') {
+                e.preventDefault();
+                alert('Content cannot be empty.');
+                editor.focus(); // Optionally focus the editor for the user
+                return false;
+            }
+            // END **NEW: Validate...
         });
     </script>
 </body>
