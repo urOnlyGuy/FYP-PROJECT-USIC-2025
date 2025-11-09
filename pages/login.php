@@ -22,7 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | USIC - UPTM Student Info Center</title>
     <?php include __DIR__ . '/../includes/pwa_head.php'; ?>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -52,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </form>
 
                         <p class="text-center mt-3 mb-0">
-                            Don’t have an account? <a href="signup.php">Sign up here</a>
+                            New to USIC? <a href="signup.php">Sign up here</a>
                         </p>
                     </div>
                 </div>

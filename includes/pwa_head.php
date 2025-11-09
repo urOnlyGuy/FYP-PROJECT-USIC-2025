@@ -4,7 +4,7 @@
 ?>
 
 <!-- PWA Meta Tags -->
-<meta name="theme-color" content="#0d6efd">
+<meta name="theme-color" content="#19519D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="USIC-UPTM Student Info Center">
@@ -23,6 +23,7 @@
 <link rel="apple-touch-icon" sizes="192x192" href="/assets/icons/icon-192x192.png">
 
 <!-- Favicon -->
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-96x96.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/icon-72x72.png">
 
