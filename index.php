@@ -1,3 +1,4 @@
+<?php include __DIR__ . '/../includes/pwa_head.php'; ?>
 <?php
 // index.php — redirector page
 

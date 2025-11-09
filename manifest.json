@@ -1,0 +1,66 @@
+{
+    "name": "UPTM Student Information Center-USIC",
+    "short_name": "USIC",
+    "description": "UPTM communication platform for students, staff and announcements",
+    "start_url": "/index.php",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0d6efd",
+    "orientation": "portrait-primary",
+    "icons": [
+      {
+        "src": "/assets/icons/icon-72x72.png",
+        "sizes": "72x72",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "/assets/icons/icon-96x96.png",
+        "sizes": "96x96",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "/assets/icons/icon-144x144.png",
+        "sizes": "144x144",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "/assets/icons/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "/assets/icons/icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ],
+    "screenshots": [
+      {
+        "src": "/assets/screenshots/screenshot1.png",
+        "sizes": "540x720",
+        "type": "image/png"
+      }
+    ],
+    "categories": ["education", "productivity"],
+    "shortcuts": [
+      {
+        "name": "View Posts",
+        "short_name": "Posts",
+        "description": "View latest announcements",
+        "url": "/student/dashboard.php",
+        "icons": [{ "src": "/assets/icons/icon-96x96.png", "sizes": "96x96" }]
+      },
+      {
+        "name": "Favorites",
+        "short_name": "Favorites",
+        "description": "View saved posts",
+        "url": "/student/favorites.php",
+        "icons": [{ "src": "/assets/icons/icon-96x96.png", "sizes": "96x96" }]
+      }
+    ]
+  }
