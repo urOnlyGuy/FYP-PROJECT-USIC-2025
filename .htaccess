@@ -1,0 +1,12 @@
+# enable rewrite engine
+RewriteEngine On
+
+# make sure the base path is correct
+RewriteBase /
+
+# if the request is for an existing file or folder, serve it normally
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# route clean urls to files in /pages/
+RewriteRule ^([a-zA-Z0-9_-]+)/?$ pages/$1.php [L]
