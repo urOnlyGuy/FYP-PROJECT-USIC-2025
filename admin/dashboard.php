@@ -86,7 +86,7 @@ if ($users) {
         </div>
     </nav>
 
-    <div class="container-fluid mt-4">
+    <div class="container-fluid mt-3">
         <?php if (isset($message)): ?>
             <div class="alert alert-<?= $messageType ?> alert-dismissible fade show">
                 <?= htmlspecialchars($message) ?>
@@ -96,7 +96,7 @@ if ($users) {
 
         <!-- Statistics Cards -->
         <div class="row mb-3">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="card text-white bg-primary">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -109,7 +109,7 @@ if ($users) {
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="card text-white bg-success">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -122,7 +122,7 @@ if ($users) {
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="card text-white bg-info">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">

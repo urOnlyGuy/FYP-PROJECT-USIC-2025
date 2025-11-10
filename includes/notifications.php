@@ -144,8 +144,8 @@ function send_email_notification($toEmail, $postTitle, $postContent, $postUrl) {
     // Try using PHPMailer-style headers with SMTP
     try {
         // Use SMTP authentication
-        $headers = "From: USIC-UPTM Student Info Center <{$smtpUser}>\r\n";
-        $headers .= "Reply-To: {$smtpUser}\r\n";
+        $headers = "From: USIC-UPTM Student Info Center <noreply@uptm.edu.my>\r\n";
+        $headers .= "Reply-To: usic@uptm.edu.my\r\n";
         $headers .= "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";

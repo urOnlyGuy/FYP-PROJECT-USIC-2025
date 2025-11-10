@@ -82,7 +82,7 @@ function upload_file_to_storage($file, $folder = 'attachments') {
 }
 
 /**
- * Upload to Firebase Storage using REST API
+ * Upload to Firebase Storage using REST API //2pm fix attempt by gemini
  */
 function upload_to_firebase_storage($localFilePath, $storagePath) {
     $bucket = getenv('FIREBASE_STORAGE_BUCKET');
@@ -99,24 +99,26 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
     
     $contentType = mime_content_type($localFilePath);
     
-    // Use multipart upload for better compatibility
+    // --- CORRECTED MULTIPART LOGIC ---
     $boundary = uniqid();
-    $delimiter = '------' . $boundary;
-    $eol = "\r\n";
+    $delimiter = "\r\n--" . $boundary . "\r\n";
+    $close = "\r\n--" . $boundary . "--";
     
-    // Build multipart body
-    $body = '';
-    $body .= $delimiter . $eol;
-    $body .= 'Content-Type: application/json; charset=UTF-8' . $eol . $eol;
+    // 1. Metadata Part (Content-Type: application/json)
+    $body = $delimiter;
+    $body .= 'Content-Type: application/json; charset=UTF-8' . "\r\n\r\n";
     $body .= json_encode([
-        'name' => $storagePath,
+        // The file's final name in the bucket
+        'name' => $storagePath, 
         'contentType' => $contentType
-    ]) . $eol;
-    $body .= $delimiter . $eol;
-    $body .= 'Content-Type: ' . $contentType . $eol;
-    $body .= 'Content-Transfer-Encoding: base64' . $eol . $eol;
-    $body .= base64_encode($fileContent) . $eol;
-    $body .= $delimiter . '--';
+    ]);
+    
+    // 2. Media Part (Content-Type: <file type>) - MUST use raw file content
+    $body .= $delimiter;
+    $body .= 'Content-Type: ' . $contentType . "\r\n\r\n";
+    $body .= $fileContent; // **THIS IS THE KEY CHANGE: NO base64_encode()**
+    
+    $body .= $close; // Closing delimiter
     
     // Upload using multipart
     $url = "https://www.googleapis.com/upload/storage/v1/b/{$bucket}/o?uploadType=multipart";
@@ -127,15 +129,19 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        // Content-Type MUST be 'multipart/related' for Google's API
         'Content-Type: multipart/related; boundary=' . $boundary,
         'Content-Length: ' . strlen($body)
     ]);
-    
+    // The rest of the function remains the same...
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
     curl_close($ch);
     
+    // ... (rest of your error handling and success logic) ...
+
     if ($error) {
         return ['success' => false, 'error' => 'Upload failed: ' . $error];
     }
