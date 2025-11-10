@@ -46,6 +46,13 @@ if ($filterCategory !== 'all') {
 
 // Get user's unread notification count
 $unreadCount = get_unread_count($_SESSION['user_id']);
+
+// Get user's unread notification count
+$unreadCount = get_unread_count($_SESSION['user_id']);
+
+// NEW: Get upcoming deadlines
+$upcomingDeadlines = get_upcoming_deadlines(5);
+?>
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -149,6 +156,54 @@ $unreadCount = get_unread_count($_SESSION['user_id']);
                 <p class="text-muted">Stay updated with the latest announcements</p>
             </div>
         </div>
+
+		<!-- NEW: Upcoming Deadlines Widget -->
+		<?php if (!empty($upcomingDeadlines)): ?>
+		<div class="row mb-4">
+			<div class="col-12">
+				<div class="card border-0 shadow-sm">
+					<div class="card-header" style="background-color: #19519D; color: white;">
+						<h5 class="mb-0">
+							<i class="bi bi-alarm-fill"></i> Upcoming Deadlines
+						</h5>
+					</div>
+					<div class="card-body p-0">
+						<div class="list-group list-group-flush">
+							<?php foreach ($upcomingDeadlines as $deadline): ?>
+								<a href="post.php?id=<?= $deadline['postId'] ?>" 
+								class="list-group-item list-group-item-action">
+									<div class="d-flex justify-content-between align-items-start">
+										<div class="flex-grow-1">
+											<h6 class="mb-1">
+												<span class="badge" style="background-color: #19519D;">
+													<?= htmlspecialchars($deadline['category']) ?>
+												</span>
+												<?= htmlspecialchars($deadline['title']) ?>
+											</h6>
+											<p class="mb-1 text-muted small"><?= htmlspecialchars($deadline['postTitle']) ?></p>
+											<small class="text-muted">
+												<i class="bi bi-calendar-event"></i>
+												<?= date('d M Y, h:i A', $deadline['deadlineDate']) ?>
+											</small>
+										</div>
+										<div class="text-end ms-3">
+											<?php 
+											$daysLeft = $deadline['daysLeft'];
+											$badgeClass = $daysLeft <= 1 ? 'bg-danger' : ($daysLeft <= 3 ? 'bg-warning text-dark' : 'bg-info');
+											?>
+											<span class="badge <?= $badgeClass ?> rounded-pill">
+												<?= $daysLeft ?> day<?= $daysLeft != 1 ? 's' : '' ?> left
+											</span>
+										</div>
+									</div>
+								</a>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php endif; ?>
 
         <!-- Search and Filter Bar (Mobile-Responsive) -->
         <div class="row mb-4">

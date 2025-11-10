@@ -236,6 +236,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div id="fileName" class="mt-2 text-success" style="display: none;"></div>
                             </div>
 
+							<!-- Deadline Reminder (NEW) -->
+							<div class="mb-3">
+								<div class="form-check form-switch">
+									<input class="form-check-input" 
+										type="checkbox" 
+										id="enableReminder"
+										onchange="toggleReminderFields()">
+									<label class="form-check-label" for="enableReminder">
+										<i class="bi bi-alarm"></i> Set Deadline Reminder
+									</label>
+								</div>
+								<small class="text-muted">Enable this for posts with important deadlines (exams, fee payments, events)</small>
+							</div>
+							
+							<!-- Reminder Fields (Hidden by default) -->
+							<div id="reminderFields" style="display: none;">
+								<div class="card bg-light mb-3">
+									<div class="card-body">
+										<h6 class="card-title"><i class="bi bi-calendar-event"></i> Deadline Settings</h6>
+										
+										<div class="mb-3">
+											<label class="form-label">Deadline Date & Time <span class="text-danger">*</span></label>
+											<input type="datetime-local" 
+												name="deadline_date" 
+												class="form-control"
+												id="deadlineDate"
+												min="<?= date('Y-m-d\TH:i') ?>">
+											<small class="text-muted">When is the deadline for this post?</small>
+										</div>
+										
+										<div class="mb-3">
+											<label class="form-label">Reminder Title <span class="text-danger">*</span></label>
+											<input type="text" 
+												name="reminder_title" 
+												class="form-control"
+												id="reminderTitle"
+												placeholder="e.g., Final Exam Schedule, Fee Payment Deadline"
+												maxlength="200">
+										</div>
+										
+										<div class="mb-3">
+											<label class="form-label">Reminder Message (Optional)</label>
+											<textarea name="reminder_message" 
+													class="form-control" 
+													rows="2"
+													placeholder="Additional message to include in reminder notifications"
+													maxlength="500"></textarea>
+										</div>
+										
+										<div class="mb-3">
+											<label class="form-label">Send Reminders</label>
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" name="reminder_days[]" value="7" checked>
+												<label class="form-check-label">7 days before deadline</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" name="reminder_days[]" value="3" checked>
+												<label class="form-check-label">3 days before deadline</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" name="reminder_days[]" value="1" checked>
+												<label class="form-check-label">1 day before deadline</label>
+											</div>
+											<small class="text-muted">Students will receive notifications at these intervals</small>
+										</div>
+									</div>
+								</div>
+							</div>                            
                             <!-- Push Notification Toggle -->
                             <div class="mb-4">
                                 <div class="form-check form-switch">
@@ -314,6 +382,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             // END **NEW: Validate...
         });
+        // Toggle reminder fields visibility
+		function toggleReminderFields() {
+			const checkbox = document.getElementById('enableReminder');
+			const fields = document.getElementById('reminderFields');
+			const deadlineDate = document.getElementById('deadlineDate');
+			const reminderTitle = document.getElementById('reminderTitle');
+			
+			if (checkbox.checked) {
+				fields.style.display = 'block';
+				deadlineDate.required = true;
+				reminderTitle.required = true;
+			} else {
+				fields.style.display = 'none';
+				deadlineDate.required = false;
+				reminderTitle.required = false;
+			}
+		}
+		
+		// Auto-fill reminder title from post title
+		document.querySelector('[name="title"]').addEventListener('blur', function() {
+			const reminderTitle = document.getElementById('reminderTitle');
+			if (reminderTitle && !reminderTitle.value) {
+				reminderTitle.value = this.value;
+			}
+		});       
     </script>
 </body>
 </html>

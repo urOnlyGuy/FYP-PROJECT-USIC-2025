@@ -533,4 +533,229 @@ function update_faq($faqId, $faqData) {
 function delete_faq($faqId) {
     return firebase_delete('faqs/' . $faqId);
 }
+
+// =====================
+// REMINDERS FUNCTIONS
+// =====================
+
+/**
+ * Set reminder for a post (admin only)
+ */
+function set_post_reminder($postId, $reminderData) {
+    $reminder = [
+        'postId' => $postId,
+        'deadlineDate' => $reminderData['deadlineDate'], // timestamp
+        'reminderDays' => $reminderData['reminderDays'] ?? [1, 3, 7], // Days before deadline
+        'title' => $reminderData['title'],
+        'message' => $reminderData['message'] ?? '',
+        'isActive' => true,
+        'createdAt' => time(),
+        'sentReminders' => [] // Track which reminders have been sent
+    ];
+    
+    $result = firebase_put('reminders/' . $postId, $reminder);
+    
+    if ($result) {
+        return ['success' => true, 'reminderId' => $postId];
+    }
+    
+    return ['success' => false, 'error' => 'Failed to set reminder'];
+}
+
+/**
+ * Get reminder for a post
+ */
+function get_post_reminder($postId) {
+    $reminder = firebase_get('reminders/' . $postId);
+    
+    if ($reminder) {
+        $reminder['id'] = $postId;
+    }
+    
+    return $reminder;
+}
+
+/**
+ * Get all active reminders
+ */
+function get_all_reminders($activeOnly = true) {
+    $reminders = firebase_get('reminders');
+    
+    if (!$reminders) return [];
+    
+    $reminderArray = [];
+    foreach ($reminders as $id => $reminder) {
+        if ($activeOnly && !($reminder['isActive'] ?? true)) {
+            continue;
+        }
+        
+        $reminder['id'] = $id;
+        $reminderArray[] = $reminder;
+    }
+    
+    // Sort by deadline date (earliest first)
+    usort($reminderArray, function($a, $b) {
+        return $a['deadlineDate'] - $b['deadlineDate'];
+    });
+    
+    return $reminderArray;
+}
+
+/**
+ * Update reminder
+ */
+function update_post_reminder($postId, $reminderData) {
+    $existing = get_post_reminder($postId);
+    
+    if (!$existing) {
+        return ['success' => false, 'error' => 'Reminder not found'];
+    }
+    
+    $result = firebase_put('reminders/' . $postId, array_merge($existing, $reminderData));
+    
+    if ($result) {
+        return ['success' => true];
+    }
+    
+    return ['success' => false, 'error' => 'Failed to update reminder'];
+}
+
+/**
+ * Delete reminder
+ */
+function delete_post_reminder($postId) {
+    return firebase_delete('reminders/' . $postId);
+}
+
+/**
+ * Check and send due reminders (to be called by cron job or on page load)
+ */
+function check_and_send_reminders() {
+    $reminders = get_all_reminders(true);
+    $currentTime = time();
+    $sentCount = 0;
+    
+    foreach ($reminders as $reminder) {
+        $deadlineDate = $reminder['deadlineDate'];
+        $daysUntilDeadline = ($deadlineDate - $currentTime) / (60 * 60 * 24);
+        
+        // Skip if deadline has passed
+        if ($daysUntilDeadline < 0) {
+            // Optionally deactivate expired reminders
+            update_post_reminder($reminder['id'], ['isActive' => false]);
+            continue;
+        }
+        
+        $sentReminders = $reminder['sentReminders'] ?? [];
+        $reminderDays = $reminder['reminderDays'] ?? [1, 3, 7];
+        
+        // Check each reminder interval
+        foreach ($reminderDays as $days) {
+            // If we're within this reminder window and haven't sent it yet
+            if ($daysUntilDeadline <= $days && $daysUntilDeadline > ($days - 1)) {
+                $reminderKey = $days . '_days';
+                
+                // Check if this specific reminder was already sent
+                if (!in_array($reminderKey, $sentReminders)) {
+                    // Send notification to all students
+                    $post = get_post($reminder['postId']);
+                    if ($post) {
+                        $message = $reminder['message'] ?: "Reminder: " . $post['title'];
+                        send_deadline_reminder_notification($reminder['postId'], $reminder['title'], $message, $days);
+                        
+                        // Mark this reminder as sent
+                        $sentReminders[] = $reminderKey;
+                        update_post_reminder($reminder['id'], ['sentReminders' => $sentReminders]);
+                        $sentCount++;
+                    }
+                }
+            }
+        }
+    }
+    
+    return ['success' => true, 'sent' => $sentCount];
+}
+
+/**
+ * Send deadline reminder notification to all students
+ */
+function send_deadline_reminder_notification($postId, $title, $message, $daysLeft) {
+    $users = firebase_get('users');
+    
+    if (!$users) return false;
+    
+    $siteUrl = getenv('SITE_URL') ?: 'http://localhost';
+    $postUrl = $siteUrl . '/student/post.php?id=' . $postId;
+    
+    $notification = [
+        'postId' => $postId,
+        'title' => '⏰ Deadline Reminder: ' . $title,
+        'message' => $daysLeft . ' day' . ($daysLeft != 1 ? 's' : '') . ' left! ' . $message,
+        'createdAt' => time(),
+        'isRead' => false,
+        'type' => 'reminder'
+    ];
+    
+    // Send to all students
+    $sentCount = 0;
+    foreach ($users as $userId => $user) {
+        if (isset($user['role']) && $user['role'] === 'student') {
+            // In-app notification
+            firebase_post('notifications/' . $userId, $notification);
+            
+            // Email notification (optional)
+            if (isset($user['email'])) {
+                $emailSubject = '⏰ Deadline Reminder: ' . $title;
+                $emailBody = "
+                <h3>⏰ Deadline Reminder</h3>
+                <p><strong>{$title}</strong></p>
+                <p>{$message}</p>
+                <p><strong>Time Left: {$daysLeft} day" . ($daysLeft != 1 ? 's' : '') . "</strong></p>
+                <p><a href='{$postUrl}'>View Full Post</a></p>
+                ";
+                
+                // You can uncomment this if you want email reminders too
+                // send_email_notification($user['email'], $emailSubject, $emailBody, $postUrl);
+                $sentCount++;
+            }
+        }
+    }
+    
+    return $sentCount;
+}
+
+/**
+ * Get upcoming deadlines for student dashboard
+ */
+function get_upcoming_deadlines($limit = 5) {
+    $reminders = get_all_reminders(true);
+    $currentTime = time();
+    $upcomingDeadlines = [];
+    
+    foreach ($reminders as $reminder) {
+        // Only show future deadlines
+        if ($reminder['deadlineDate'] > $currentTime) {
+            $post = get_post($reminder['postId']);
+            if ($post) {
+                $daysLeft = ceil(($reminder['deadlineDate'] - $currentTime) / (60 * 60 * 24));
+                $upcomingDeadlines[] = [
+                    'postId' => $reminder['postId'],
+                    'title' => $reminder['title'],
+                    'postTitle' => $post['title'],
+                    'category' => $post['category'],
+                    'deadlineDate' => $reminder['deadlineDate'],
+                    'daysLeft' => $daysLeft,
+                    'message' => $reminder['message']
+                ];
+            }
+        }
+    }
+    
+    // Sort by deadline (closest first)
+    usort($upcomingDeadlines, function($a, $b) {
+        return $a['deadlineDate'] - $b['deadlineDate'];
+    });
+    
+    return array_slice($upcomingDeadlines, 0, $limit);
+}
 ?>

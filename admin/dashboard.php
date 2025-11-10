@@ -79,6 +79,9 @@ if ($users) {
                     <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['email']) ?>
                     <span class="badge bg-warning text-dark"><?= strtoupper($_SESSION['role']) ?></span>
                 </span>
+                <a href="manage_reminders.php" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-alarm"></i> Manage Reminders
+                </a>
                 <a href="manage_faq.php" class="btn btn-outline-light btn-sm">
                     <i class="bi bi-question-circle"></i> Manage FAQ
                 </a>

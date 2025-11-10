@@ -29,6 +29,9 @@ if (!$post) {
     exit;
 }
 
+// NEW: Check if post has a deadline reminder
+$postReminder = get_post_reminder($postId);
+
 // Increment view count
 increment_view_count($postId);
 
@@ -150,6 +153,30 @@ if (isset($_POST['toggle_favorite'])) {
                         <?= $post['viewCount'] ?? 0 ?> views
                     </small>
                 </div>
+
+				<!-- NEW: Deadline Badge -->
+				<?php if ($postReminder && $postReminder['deadlineDate'] > time()): ?>
+					<?php 
+					$daysLeft = ceil(($postReminder['deadlineDate'] - time()) / (60 * 60 * 24));
+					$badgeClass = $daysLeft <= 1 ? 'bg-danger' : ($daysLeft <= 3 ? 'bg-warning text-dark' : 'bg-info');
+					?>
+					<div class="alert alert-<?= $daysLeft <= 1 ? 'danger' : ($daysLeft <= 3 ? 'warning' : 'info') ?> d-flex align-items-center">
+						<i class="bi bi-alarm-fill me-2" style="font-size: 1.5rem;"></i>
+						<div class="flex-grow-1">
+							<strong><i class="bi bi-calendar-event"></i> <?= htmlspecialchars($postReminder['title']) ?></strong>
+							<p class="mb-0">
+								Deadline: <?= date('d M Y, h:i A', $postReminder['deadlineDate']) ?>
+								<br>
+								<span class="badge <?= $badgeClass ?>">
+									⏰ <?= $daysLeft ?> day<?= $daysLeft != 1 ? 's' : '' ?> remaining
+								</span>
+							</p>
+							<?php if ($postReminder['message']): ?>
+								<small><?= htmlspecialchars($postReminder['message']) ?></small>
+							<?php endif; ?>
+						</div>
+					</div>
+				<?php endif; ?>
                 
                 <hr>
                 

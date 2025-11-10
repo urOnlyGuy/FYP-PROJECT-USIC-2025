@@ -75,6 +75,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
         
         $result = update_post($postId, $postData);
+
+        if ($result['success']) {
+    // Handle deadline reminder update
+    if (isset($_POST['deadline_date']) && !empty($_POST['deadline_date'])) {
+        $deadlineDate = strtotime($_POST['deadline_date']);
+        $reminderTitle = trim($_POST['reminder_title']);
+        $reminderMessage = trim($_POST['reminder_message']) ?? '';
+        $reminderDays = $_POST['reminder_days'] ?? [1, 3, 7];
+        
+        $reminderDays = array_map('intval', $reminderDays);
+        
+        if (!empty($reminderTitle) && $deadlineDate > time()) {
+            $reminderData = [
+                'deadlineDate' => $deadlineDate,
+                'title' => $reminderTitle,
+                'message' => $reminderMessage,
+                'reminderDays' => $reminderDays
+            ];
+            
+            set_post_reminder($postId, $reminderData);
+        }
+    } else {
+        // Remove reminder if deadline is cleared
+        delete_post_reminder($postId);
+    }
+    
+    $message = 'Post updated successfully!';
+    $messageType = 'success';
+    $post = get_post($postId); // Refresh
+    
+    header("refresh:2;url=dashboard.php");
+}
         
         if ($result['success']) {
             $message = 'Post updated successfully!';
@@ -243,6 +275,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </small>
                                 <div id="fileName" class="mt-2 text-success" style="display: none;"></div>
                             </div>
+
+                            </div>
+							// Get existing reminder if any
+							<?php $existingReminder = get_post_reminder($postId); ?>
+							
+							<!-- Deadline Reminder -->
+							<div class="mb-3">
+								<div class="form-check form-switch">
+									<input class="form-check-input" 
+										type="checkbox" 
+										id="enableReminder"
+										<?= $existingReminder ? 'checked' : '' ?>
+										onchange="toggleReminderFields()">
+									<label class="form-check-label" for="enableReminder">
+										<i class="bi bi-alarm"></i> Set Deadline Reminder
+									</label>
+								</div>
+							</div>
+							
+							<!-- Reminder Fields -->
+							<div id="reminderFields" style="display: <?= $existingReminder ? 'block' : 'none' ?>;">
+								<div class="card bg-light mb-3">
+									<div class="card-body">
+										<h6 class="card-title"><i class="bi bi-calendar-event"></i> Deadline Settings</h6>
+										
+										<div class="mb-3">
+											<label class="form-label">Deadline Date & Time</label>
+											<input type="datetime-local" 
+												name="deadline_date" 
+												class="form-control"
+												id="deadlineDate"
+												value="<?= $existingReminder ? date('Y-m-d\TH:i', $existingReminder['deadlineDate']) : '' ?>"
+												min="<?= date('Y-m-d\TH:i') ?>">
+										</div>
+										
+										<div class="mb-3">
+											<label class="form-label">Reminder Title</label>
+											<input type="text" 
+												name="reminder_title" 
+												class="form-control"
+												id="reminderTitle"
+												value="<?= $existingReminder ? htmlspecialchars($existingReminder['title']) : '' ?>"
+												maxlength="200">
+										</div>
+										
+										<div class="mb-3">
+											<label class="form-label">Reminder Message (Optional)</label>
+											<textarea name="reminder_message" 
+													class="form-control" 
+													rows="2"
+													maxlength="500"><?= $existingReminder ? htmlspecialchars($existingReminder['message']) : '' ?></textarea>
+										</div>
+										
+										<div class="mb-3">
+											<label class="form-label">Send Reminders</label>
+											<?php 
+											$selectedDays = $existingReminder ? ($existingReminder['reminderDays'] ?? [1, 3, 7]) : [1, 3, 7];
+											?>
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" name="reminder_days[]" value="7" 
+													<?= in_array(7, $selectedDays) ? 'checked' : '' ?>>
+												<label class="form-check-label">7 days before deadline</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" name="reminder_days[]" value="3"
+													<?= in_array(3, $selectedDays) ? 'checked' : '' ?>>
+												<label class="form-check-label">3 days before deadline</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" name="reminder_days[]" value="1"
+													<?= in_array(1, $selectedDays) ? 'checked' : '' ?>>
+												<label class="form-check-label">1 day before deadline</label>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<script>
+							function toggleReminderFields() {
+								const checkbox = document.getElementById('enableReminder');
+								const fields = document.getElementById('reminderFields');
+								const deadlineDate = document.getElementById('deadlineDate');
+								const reminderTitle = document.getElementById('reminderTitle');
+								
+								if (checkbox.checked) {
+									fields.style.display = 'block';
+									deadlineDate.required = true;
+									reminderTitle.required = true;
+								} else {
+									fields.style.display = 'none';
+									deadlineDate.required = false;
+									reminderTitle.required = false;
+								}
+							}
+							</script>
 
                             <!-- Action Buttons -->
                             <div class="d-flex gap-2">
