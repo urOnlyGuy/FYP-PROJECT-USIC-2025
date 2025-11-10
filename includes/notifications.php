@@ -81,18 +81,24 @@ function send_email_notifications($postId, $postTitle, $postContent) {
  * Send individual email notification
  */
 function send_email_notification($toEmail, $postTitle, $postContent, $postUrl) {
+    // Get SMTP settings
+    $smtpHost = getenv('SMTP_HOST');
+    $smtpPort = getenv('SMTP_PORT');
+    $smtpUser = getenv('SMTP_USER');
+    $smtpPass = getenv('SMTP_PASS');
+    
+    // Check if SMTP is configured
+    if (!$smtpHost || !$smtpUser || !$smtpPass) {
+        error_log('Email notification failed: SMTP not configured');
+        return false;
+    }
+    
     $subject = "New Announcement: " . $postTitle;
     
     // Extract plain text from HTML content (first 200 chars)
     $plainContent = strip_tags($postContent);
     $preview = substr($plainContent, 0, 200);
     if (strlen($plainContent) > 200) $preview .= '...';
-    
-    // Email headers
-    $headers = "From: UPTM Student Info Center - USIC<noreply@uptm.edu.my>\r\n";
-    $headers .= "Reply-To: noreply@uptm.edu.my\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
     
     // Email body
     $message = "
@@ -102,32 +108,32 @@ function send_email_notification($toEmail, $postTitle, $postContent, $postUrl) {
         <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #007bff; color: white; padding: 20px; text-align: center; }
-            .content { background: #f9f9f9; padding: 20px; margin: 20px 0; }
+            .header { background: #19519D; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+            .content { background: #f9f9f9; padding: 20px; margin: 0; border: 1px solid #ddd; }
             .button { 
                 display: inline-block; 
                 padding: 12px 30px; 
-                background: #007bff; 
-                color: white; 
+                background: #19519D; 
+                color: white !important; 
                 text-decoration: none; 
                 border-radius: 5px;
                 margin-top: 15px;
             }
-            .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
+            .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; padding: 20px; background: #f0f0f0; border-radius: 0 0 5px 5px; }
         </style>
     </head>
     <body>
         <div class='container'>
             <div class='header'>
-                <h2>📢 New Announcement</h2>
+                <h2 style='margin: 0;'>📢 New Announcement</h2>
             </div>
             <div class='content'>
-                <h3>{$postTitle}</h3>
+                <h3 style='color: #19519D;'>{$postTitle}</h3>
                 <p>{$preview}</p>
-                <a href='{$postUrl}' class='button'>View Full Post</a>
+                <a href='{$postUrl}' class='button' style='color: white;'>View Full Post</a>
             </div>
             <div class='footer'>
-                <p>UPTM Student Information Center - USIC</p>
+                <p><strong>USIC-UPTM Student Information Center</strong></p>
                 <p>You received this email because you're subscribed to university announcements.</p>
             </div>
         </div>
@@ -135,8 +141,31 @@ function send_email_notification($toEmail, $postTitle, $postContent, $postUrl) {
     </html>
     ";
     
-    // Send email
-    return mail($toEmail, $subject, $message, $headers);
+    // Try using PHPMailer-style headers with SMTP
+    try {
+        // Use SMTP authentication
+        $headers = "From: USIC-UPTM Student Info Center <{$smtpUser}>\r\n";
+        $headers .= "Reply-To: {$smtpUser}\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+        
+        // Configure SMTP for mail() function
+        ini_set('SMTP', $smtpHost);
+        ini_set('smtp_port', $smtpPort);
+        
+        // Send email
+        $result = mail($toEmail, $subject, $message, $headers);
+        
+        if (!$result) {
+            error_log("Email failed to: {$toEmail}");
+        }
+        
+        return $result;
+    } catch (Exception $e) {
+        error_log("Email exception: " . $e->getMessage());
+        return false;
+    }
 }
 
 /**

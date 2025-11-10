@@ -99,18 +99,36 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
     
     $contentType = mime_content_type($localFilePath);
     
-    // Upload URL with uploadType=media for direct upload
-    $encodedPath = str_replace(['/', ' '], ['%2F', '%20'], $storagePath);
-    $url = "https://firebasestorage.googleapis.com/v0/b/{$bucket}/o?name={$encodedPath}";
+    // Use multipart upload for better compatibility
+    $boundary = uniqid();
+    $delimiter = '------' . $boundary;
+    $eol = "\r\n";
+    
+    // Build multipart body
+    $body = '';
+    $body .= $delimiter . $eol;
+    $body .= 'Content-Type: application/json; charset=UTF-8' . $eol . $eol;
+    $body .= json_encode([
+        'name' => $storagePath,
+        'contentType' => $contentType
+    ]) . $eol;
+    $body .= $delimiter . $eol;
+    $body .= 'Content-Type: ' . $contentType . $eol;
+    $body .= 'Content-Transfer-Encoding: base64' . $eol . $eol;
+    $body .= base64_encode($fileContent) . $eol;
+    $body .= $delimiter . '--';
+    
+    // Upload using multipart
+    $url = "https://www.googleapis.com/upload/storage/v1/b/{$bucket}/o?uploadType=multipart";
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $fileContent);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: ' . $contentType,
-        'Content-Length: ' . strlen($fileContent)
+        'Content-Type: multipart/related; boundary=' . $boundary,
+        'Content-Length: ' . strlen($body)
     ]);
     
     $response = curl_exec($ch);
@@ -122,10 +140,10 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
         return ['success' => false, 'error' => 'Upload failed: ' . $error];
     }
     
-    if ($httpCode !== 200) {
+    if ($httpCode !== 200 && $httpCode !== 201) {
         $errorData = json_decode($response, true);
         $errorMsg = isset($errorData['error']['message']) ? $errorData['error']['message'] : 'HTTP ' . $httpCode;
-        return ['success' => false, 'error' => 'Upload failed: ' . $errorMsg];
+        return ['success' => false, 'error' => 'Upload failed: ' . $errorMsg . ' (Response: ' . substr($response, 0, 200) . ')'];
     }
     
     $data = json_decode($response, true);
@@ -134,10 +152,9 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
         return ['success' => false, 'error' => 'Upload successful but no file name returned'];
     }
     
-    // Generate public URL with token
-    $downloadToken = $data['downloadTokens'] ?? uniqid();
-    $downloadUrl = "https://firebasestorage.googleapis.com/v0/b/{$bucket}/o/" . 
-                   urlencode($storagePath) . "?alt=media&token=" . $downloadToken;
+    // Generate public URL
+    $encodedPath = urlencode($storagePath);
+    $downloadUrl = "https://firebasestorage.googleapis.com/v0/b/{$bucket}/o/{$encodedPath}?alt=media";
     
     return [
         'success' => true,

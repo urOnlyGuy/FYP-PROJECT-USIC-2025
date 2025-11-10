@@ -7,6 +7,11 @@ require_once __DIR__ . '/../includes/firebase.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/helpers.php';
 
+// Prevent caching
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
+
 // Check if user is admin or staff
 if (!is_logged_in() || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'staff')) {
     header('Location: ../pages/login.php');
@@ -51,19 +56,6 @@ if ($users) {
         }
     }
 }
-
-// Get statistics
-$totalPosts = count(get_all_posts());
-$totalViews = array_sum(array_column(get_all_posts(), 'viewCount'));
-$users = firebase_get('users');
-$totalStudents = 0;
-if ($users) {
-    foreach ($users as $user) {
-        if (isset($user['role']) && $user['role'] === 'student') {
-            $totalStudents++;
-        }
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,7 +69,7 @@ if ($users) {
 </head>
 <body class="bg-light">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="background-color: #16519E !important;">
         <div class="container-fluid">
             <a class="navbar-brand" href="dashboard.php">
                 <i class="bi bi-megaphone-fill"></i> USIC - Admin 
@@ -103,7 +95,7 @@ if ($users) {
         <?php endif; ?>
 
         <!-- Statistics Cards -->
-        <div class="row mb-4">
+        <div class="row mb-3">
             <div class="col-md-3">
                 <div class="card text-white bg-primary">
                     <div class="card-body">
@@ -135,20 +127,11 @@ if ($users) {
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-title mb-0">Total Students</h6>
+                                <h6 class="card-title mb-0">Registered Students</h6>
                                 <h2 class="mb-0"><?= $totalStudents ?></h2>
                             </div>
                             <i class="bi bi-people" style="font-size: 3rem; opacity: 0.5;"></i>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-white bg-warning">
-                    <div class="card-body">
-                        <a href="create_post.php" class="btn btn-light btn-lg w-100">
-                            <i class="bi bi-plus-circle"></i> Create New Post
-                        </a>
                     </div>
                 </div>
             </div>
