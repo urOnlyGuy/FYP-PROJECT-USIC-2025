@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="bg-light">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="background-color: #16519E !important;">
         <div class="container">
             <a class="navbar-brand" href="dashboard.php">
                 <i class="bi bi-megaphone-fill"></i> UPTM Info Center

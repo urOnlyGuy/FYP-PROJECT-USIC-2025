@@ -290,4 +290,152 @@ function get_user_favorites($userId) {
     
     return $favoritePosts;
 }
+
+// =====================
+// FAQ MANAGEMENT FUNCTIONS
+// =====================
+
+/**
+ * Create a new FAQ entry
+ */
+function create_faq($faqData) {
+    $faqId = 'faq_' . uniqid() . '_' . time();
+    
+    $faq = [
+        'question' => $faqData['question'],
+        'answer' => $faqData['answer'],
+        'category' => $faqData['category'],
+        'order' => $faqData['order'] ?? 999,
+        'isActive' => $faqData['isActive'] ?? true,
+        'createdAt' => time(),
+        'createdBy' => $faqData['createdBy'],
+        'updatedAt' => time()
+    ];
+    
+    $result = firebase_put('faqs/' . $faqId, $faq);
+    
+    if ($result) {
+        return ['success' => true, 'faqId' => $faqId];
+    }
+    
+    return ['success' => false, 'error' => 'Failed to create FAQ'];
+}
+
+/**
+ * Get all FAQs
+ */
+function get_all_faqs($activeOnly = true) {
+    $faqs = firebase_get('faqs');
+    
+    if (!$faqs) return [];
+    
+    $faqArray = [];
+    foreach ($faqs as $id => $faq) {
+        if ($activeOnly && !($faq['isActive'] ?? true)) {
+            continue;
+        }
+        $faq['id'] = $id;
+        $faqArray[] = $faq;
+    }
+    
+    // Sort by order and then by creation date
+    usort($faqArray, function($a, $b) {
+        if ($a['order'] == $b['order']) {
+            return $a['createdAt'] - $b['createdAt'];
+        }
+        return $a['order'] - $b['order'];
+    });
+    
+    return $faqArray;
+}
+
+/**
+ * Get FAQs by category
+ */
+function get_faqs_by_category($category, $activeOnly = true) {
+    $allFaqs = get_all_faqs($activeOnly);
+    
+    return array_filter($allFaqs, function($faq) use ($category) {
+        return $faq['category'] === $category;
+    });
+}
+
+/**
+ * Get single FAQ by ID
+ */
+function get_faq($faqId) {
+    $faq = firebase_get('faqs/' . $faqId);
+    
+    if ($faq) {
+        $faq['id'] = $faqId;
+    }
+    
+    return $faq;
+}
+
+/**
+ * Update FAQ
+ */
+function update_faq($faqId, $faqData) {
+    $existingFaq = get_faq($faqId);
+    
+    if (!$existingFaq) {
+        return ['success' => false, 'error' => 'FAQ not found'];
+    }
+    
+    $faqData['updatedAt'] = time();
+    
+    $result = firebase_put('faqs/' . $faqId, array_merge($existingFaq, $faqData));
+    
+    if ($result) {
+        return ['success' => true];
+    }
+    
+    return ['success' => false, 'error' => 'Failed to update FAQ'];
+}
+
+/**
+ * Delete FAQ
+ */
+function delete_faq($faqId) {
+    return firebase_delete('faqs/' . $faqId);
+}
+
+/**
+ * Get FAQ categories
+ */
+function get_faq_categories() {
+    return [
+        'getting_started' => [
+            'name' => 'Getting Started',
+            'icon' => 'bi-rocket-takeoff-fill',
+            'emoji' => '🚀'
+        ],
+        'posts_announcements' => [
+            'name' => 'Posts & Announcements',
+            'icon' => 'bi-megaphone-fill',
+            'emoji' => '📢'
+        ],
+        'favorites_notifications' => [
+            'name' => 'Favorites & Notifications',
+            'icon' => 'bi-star-fill',
+            'emoji' => '⭐'
+        ],
+        'mobile_pwa' => [
+            'name' => 'Mobile App & PWA',
+            'icon' => 'bi-phone-fill',
+            'emoji' => '📱'
+        ],
+        'troubleshooting' => [
+            'name' => 'Troubleshooting',
+            'icon' => 'bi-tools',
+            'emoji' => '🔧'
+        ],
+        'admin_staff' => [
+            'name' => 'For Admin & Staff',
+            'icon' => 'bi-person-badge-fill',
+            'emoji' => '👨‍💼'
+        ]
+    ];
+}
 ?>

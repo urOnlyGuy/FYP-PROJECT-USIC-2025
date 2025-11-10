@@ -79,6 +79,9 @@ if ($users) {
                     <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['email']) ?>
                     <span class="badge bg-warning text-dark"><?= strtoupper($_SESSION['role']) ?></span>
                 </span>
+                <a href="manage_faq.php" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-question-circle"></i> Manage FAQ
+                </a>
                 <a href="../pages/logout.php" class="btn btn-outline-light btn-sm">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </a>
