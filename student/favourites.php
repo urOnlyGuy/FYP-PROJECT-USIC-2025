@@ -29,13 +29,13 @@ if (!$post) {
     exit;
 }
 
-// Increment view count
+//Increment view count
 increment_view_count($postId);
 
-// Check if favorited
+//check if favourited
 $isFavorited = is_favorited($_SESSION['user_id'], $postId);
 
-// Handle favorite toggle
+// handle favourite toggle
 if (isset($_POST['toggle_favorite'])) {
     if ($isFavorited) {
         remove_from_favorites($_SESSION['user_id'], $postId);

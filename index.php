@@ -4,14 +4,20 @@
 
 require_once __DIR__ . '/includes/auth.php';; // include firebase auth config
 
-// check if user is logged in
-if (isset($_SESSION['user'])) {
-    // user is logged in, redirect to dashboard
-    header("Location: dashboard.php");
+// Check if user is logged in
+if (is_logged_in()) {
+    // Redirect based on role
+    $role = $_SESSION['role'] ?? 'student';
+    
+    if ($role === 'admin' || $role === 'staff') {
+        header("Location: admin/dashboard.php");
+    } else {
+        header("Location: student/dashboard.php");
+    }
     exit();
 } else {
-    // user not logged in, redirect to login
-    header("Location: login.php");
+    // User not logged in, redirect to login
+    header("Location: pages/login.php");
     exit();
 }
 ?>
