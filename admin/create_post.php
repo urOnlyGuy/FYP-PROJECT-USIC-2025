@@ -85,8 +85,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Post created successfully!';
             $messageType = 'success';
             
-            // Redirect to dashboard after 2 seconds
-            header("refresh:2;url=dashboard.php");
+            // Clear cache and redirect
+            header("Cache-Control: no-cache, no-store, must-revalidate");
+            header("Pragma: no-cache");
+            header("Expires: 0");
+            
+			//**OPTIONS WITH NO TIMER** Redirect immediately without timer
+            //echo '<script>window.location.href = "dashboard.php?refresh=' . time() . '";</script>';
+            //exit;
+			//END *OPTIONS WITH NO TIMES*
+			
+			//**OPTIONS WITH TIMER** Redirect after a 2-second delay (2000 milliseconds)
+			echo '<script>
+			setTimeout(function() {
+			window.location.href = "dashboard.php?refresh=' . time() . '";
+			}, 2000);
+			</script>';
+			exit;
         } else {
             $message = 'Failed to create post: ' . ($result['error'] ?? 'Unknown error');
             $messageType = 'danger';

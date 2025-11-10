@@ -88,15 +88,20 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
     $bucket = getenv('FIREBASE_STORAGE_BUCKET');
     
     if (!$bucket) {
-        return ['success' => false, 'error' => 'Firebase Storage not configured'];
+        return ['success' => false, 'error' => 'Firebase Storage not configured in .env'];
     }
     
     // Read file content
     $fileContent = file_get_contents($localFilePath);
+    if ($fileContent === false) {
+        return ['success' => false, 'error' => 'Failed to read file'];
+    }
+    
     $contentType = mime_content_type($localFilePath);
     
-    // Upload URL
-    $url = "https://firebasestorage.googleapis.com/v0/b/{$bucket}/o/" . urlencode($storagePath);
+    // Upload URL with uploadType=media for direct upload
+    $encodedPath = str_replace(['/', ' '], ['%2F', '%20'], $storagePath);
+    $url = "https://firebasestorage.googleapis.com/v0/b/{$bucket}/o?name={$encodedPath}";
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -110,17 +115,29 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
     
+    if ($error) {
+        return ['success' => false, 'error' => 'Upload failed: ' . $error];
+    }
+    
     if ($httpCode !== 200) {
-        return ['success' => false, 'error' => 'Failed to upload to Firebase Storage'];
+        $errorData = json_decode($response, true);
+        $errorMsg = isset($errorData['error']['message']) ? $errorData['error']['message'] : 'HTTP ' . $httpCode;
+        return ['success' => false, 'error' => 'Upload failed: ' . $errorMsg];
     }
     
     $data = json_decode($response, true);
     
-    // Generate public URL
+    if (!isset($data['name'])) {
+        return ['success' => false, 'error' => 'Upload successful but no file name returned'];
+    }
+    
+    // Generate public URL with token
+    $downloadToken = $data['downloadTokens'] ?? uniqid();
     $downloadUrl = "https://firebasestorage.googleapis.com/v0/b/{$bucket}/o/" . 
-                   urlencode($storagePath) . "?alt=media";
+                   urlencode($storagePath) . "?alt=media&token=" . $downloadToken;
     
     return [
         'success' => true,
