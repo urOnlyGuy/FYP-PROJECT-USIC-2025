@@ -1,11 +1,12 @@
 <?php
-// student/post.php
-// View single post with full details
+// student/favourites.php
+// View user's favorite posts
 
 session_start();
 require_once __DIR__ . '/../includes/firebase.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/helpers.php';
+require_once __DIR__ . '/../includes/notifications.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
@@ -13,47 +14,18 @@ if (!is_logged_in()) {
     exit;
 }
 
-// Get post ID
-$postId = $_GET['id'] ?? null;
+// Get user's favorite posts
+$favoritePosts = get_user_favorites($_SESSION['user_id']);
 
-if (!$postId) {
-    header('Location: dashboard.php');
-    exit;
-}
-
-// Get post
-$post = get_post($postId);
-
-if (!$post) {
-    header('Location: dashboard.php');
-    exit;
-}
-
-//Increment view count
-increment_view_count($postId);
-
-//check if favourited
-$isFavorited = is_favorited($_SESSION['user_id'], $postId);
-
-// handle favourite toggle
-if (isset($_POST['toggle_favorite'])) {
-    if ($isFavorited) {
-        remove_from_favorites($_SESSION['user_id'], $postId);
-        $isFavorited = false;
-        $message = 'Removed from favorites';
-    } else {
-        add_to_favorites($_SESSION['user_id'], $postId);
-        $isFavorited = true;
-        $message = 'Added to favorites';
-    }
-}
+// Get user's unread notification count
+$unreadCount = get_unread_count($_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($post['title']) ?> | USIC - UPTM Info Center</title>
+    <title>Favourites | USIC - UPTM Student Info Center</title>
     
     <!-- PWA Support -->
     <?php include __DIR__ . '/../includes/pwa_head.php'; ?>
@@ -62,128 +34,139 @@ if (isset($_POST['toggle_favorite'])) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <style>
-        .post-header-image {
-            width: 100%;
-            max-height: 400px;
+        .post-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .post-card img {
+            height: 200px;
             object-fit: cover;
-            border-radius: 10px;
         }
-        .post-content {
-            font-size: 1.1rem;
-            line-height: 1.8;
-        }
-        .post-content img {
-            max-width: 100%;
-            height: auto;
-        }
-        .favorite-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        .category-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
         }
         
         @media (max-width: 768px) {
-            .post-header-image {
-                max-height: 250px;
-            }
-            .post-content {
-                font-size: 1rem;
-            }
-            .favorite-btn {
-                width: 50px;
-                height: 50px;
-                bottom: 15px;
-                right: 15px;
+            .post-card img {
+                height: 150px;
             }
         }
     </style>
 </head>
 <body class="bg-light">
     <!-- Navbar -->
-    <nav class="navbar navbar-dark" style="background-color: #19519D;">
-        <div class="container">
-            <a href="dashboard.php" class="btn btn-outline-light btn-sm">
-                <i class="bi bi-arrow-left"></i> Back
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #19519D;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.php">
+                <i class="bi bi-megaphone-fill"></i> | USIC - UPTM Student Info Center
             </a>
-            <span class="navbar-brand mx-auto">Post Details</span>
-            <div style="width: 80px;"></div> <!-- Spacer for centering -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.php">
+                            <i class="bi bi-house-fill"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="favourites.php">
+                            <i class="bi bi-star-fill"></i> Favourites
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="notifications.php">
+                            <i class="bi bi-bell-fill"></i> Notifications
+                            <?php if ($unreadCount > 0): ?>
+                                <span class="badge bg-danger notification-badge"><?= $unreadCount ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../pages/logout.php">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <div class="container mt-4 mb-5 pb-5">
-        <?php if (isset($message)): ?>
-            <div class="alert alert-success alert-dismissible fade show">
-                <?= htmlspecialchars($message) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h4 class="mb-0">
+                    <i class="bi bi-star-fill text-warning"></i> My Favourites
+                </h4>
+                <p class="text-muted">Posts you've marked as favorites</p>
             </div>
-        <?php endif; ?>
+        </div>
 
-        <!-- Post Card -->
-        <div class="card border-0 shadow-sm">
-            <!-- Header Image -->
-            <img src="<?= htmlspecialchars($post['headerImage']) ?>" 
-                 class="post-header-image" 
-                 alt="<?= htmlspecialchars($post['title']) ?>">
-            
-            <div class="card-body">
-                <!-- Category Badge -->
-                <span class="badge mb-2" style="background-color: #19519D;">
-                    <?= htmlspecialchars($post['category']) ?>
-                </span>
-                
-                <!-- Title -->
-                <h2 class="card-title mb-3"><?= htmlspecialchars($post['title']) ?></h2>
-                
-                <!-- Meta Info -->
-                <div class="d-flex flex-wrap gap-3 mb-4 text-muted">
-                    <small>
-                        <i class="bi bi-clock"></i> 
-                        <?= format_date($post['createdAt']) ?>
-                    </small>
-                    <small>
-                        <i class="bi bi-eye"></i> 
-                        <?= $post['viewCount'] ?? 0 ?> views
-                    </small>
-                </div>
-                
-                <hr>
-                
-                <!-- Content -->
-                <div class="post-content">
-                    <?= $post['content'] ?>
-                </div>
-                
-                <!-- Attachment -->
-                <?php if (!empty($post['attachmentUrl'])): ?>
-                    <div class="mt-4 p-3 bg-light rounded">
-                        <h6><i class="bi bi-paperclip"></i> Attachment</h6>
-                        <a href="<?= htmlspecialchars($post['attachmentUrl']) ?>" 
-                           class="btn btn-outline-primary" 
-                           download
-                           target="_blank">
-                            <i class="bi bi-download"></i> 
-                            Download <?= htmlspecialchars($post['attachmentName'] ?? 'File') ?>
+        <!-- Favorite Posts Grid -->
+        <div class="row g-3">
+            <?php if (empty($favoritePosts)): ?>
+                <!-- Empty State -->
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="bi bi-star" style="font-size: 4rem; color: #ccc;"></i>
+                        <h5 class="text-muted mt-3">No favorites yet</h5>
+                        <p class="text-muted">Start adding posts to your favorites!</p>
+                        <a href="dashboard.php" class="btn btn-primary mt-2">
+                            <i class="bi bi-house-fill"></i> Browse Posts
                         </a>
                     </div>
-                <?php endif; ?>
-            </div>
+                </div>
+            <?php else: ?>
+                <?php foreach ($favoritePosts as $post): ?>
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                        <div class="card post-card border-0 shadow-sm">
+                            <div class="position-relative">
+                                <img src="<?= htmlspecialchars($post['headerImage']) ?>" 
+                                     class="card-img-top" 
+                                     alt="<?= htmlspecialchars($post['title']) ?>"
+                                     loading="lazy">
+                                <span class="badge category-badge" style="background-color: #19519D;">
+                                    <?= htmlspecialchars($post['category']) ?>
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <?= htmlspecialchars($post['title']) ?>
+                                </h6>
+                                <p class="card-text text-muted small">
+                                    <?= substr(strip_tags($post['content']), 0, 80) ?>...
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> <?= time_ago($post['createdAt']) ?>
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bi bi-eye"></i> <?= $post['viewCount'] ?? 0 ?>
+                                    </small>
+                                </div>
+                                <a href="post.php?id=<?= $post['id'] ?>" 
+                                   class="btn btn-sm btn-primary w-100 mt-2">
+                                    Read More
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
 
-    <!-- Floating Favorite Button -->
-    <form method="POST" style="display: inline;">
-        <button type="submit" 
-                name="toggle_favorite" 
-                class="btn favorite-btn <?= $isFavorited ? 'btn-warning' : 'btn-outline-warning' ?>"
-                title="<?= $isFavorited ? 'Remove from favorites' : 'Add to favorites' ?>">
-            <i class="bi bi-star<?= $isFavorited ? '-fill' : '' ?>" style="font-size: 1.5rem;"></i>
-        </button>
-    </form>
+    <!-- Bottom spacing for mobile -->
+    <div class="pb-5 mb-5"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
