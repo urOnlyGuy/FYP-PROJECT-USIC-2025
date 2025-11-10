@@ -2,7 +2,9 @@
 // auth.php
 // handles signup, login, logout, and session management using firebase
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/firebase.php';
 
 // UPDATE1- function to validate email domain (part1/2)
