@@ -101,8 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             height: 80px;
             margin: 0 auto 1rem;
             background: white;
-            border-radius: 20px;
-            padding: 12px;
+            border-radius: 15px;
+            padding: 8px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: center;
@@ -298,7 +298,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-5 col-lg-4 login-container">
+            <div class="col-md-9 col-lg-8 login-container">
                 <div class="login-card card border-0">
                     <div class="login-header">
                         <!-- App Logo -->
@@ -307,11 +307,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         
                         <!-- App Title -->
-                        <h1 class="app-title">USIC</h1>
-                        <p class="app-subtitle">UPTM Student Information Center</p>
+                        <h1 class="app-title">UPTM Student Information Center</h1>
                         
-                        <!-- Welcome Message -->
-                        <p class="welcome-text">Welcome Back! 👋</p>
                     </div>
                     
                     <div class="login-body">
@@ -378,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 
-                <div class="text-center mt-3">
+                <div class="text-center mt-3" style="display:none;">
                     <div class="footer-badge">
                         <small class="text-white">
                             <i class="bi bi-shield-check me-1"></i>

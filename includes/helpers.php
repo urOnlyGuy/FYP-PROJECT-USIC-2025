@@ -222,7 +222,7 @@ function generate_post_id() {
  * Format timestamp for display
  */
 function format_date($timestamp) {
-    return date('F j, Y \a\t g:i A', $timestamp);
+    return date('d M Y \a\t g:i A', $timestamp);
 }
 
 /**
@@ -236,6 +236,6 @@ function time_ago($timestamp) {
     if ($time < 86400) return floor($time / 3600) . ' hours ago';
     if ($time < 604800) return floor($time / 86400) . ' days ago';
     
-    return date('M j, Y', $timestamp);
+    return date('d M Y', $timestamp);
 }
 ?>
