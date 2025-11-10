@@ -82,7 +82,8 @@ function upload_file_to_storage($file, $folder = 'attachments') {
 }
 
 /**
- * Upload to Firebase Storage using REST API //2pm fix attempt by gemini
+ * Upload to Firebase Storage using REST API
+ * 3rd fix attempt to use Firebase Storage API instead of Google Cloud Storage API
  */
 function upload_to_firebase_storage($localFilePath, $storagePath) {
     $bucket = getenv('FIREBASE_STORAGE_BUCKET');
@@ -99,49 +100,26 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
     
     $contentType = mime_content_type($localFilePath);
     
-    // --- CORRECTED MULTIPART LOGIC ---
-    $boundary = uniqid();
-    $delimiter = "\r\n--" . $boundary . "\r\n";
-    $close = "\r\n--" . $boundary . "--";
-    
-    // 1. Metadata Part (Content-Type: application/json)
-    $body = $delimiter;
-    $body .= 'Content-Type: application/json; charset=UTF-8' . "\r\n\r\n";
-    $body .= json_encode([
-        // The file's final name in the bucket
-        'name' => $storagePath, 
-        'contentType' => $contentType
-    ]);
-    
-    // 2. Media Part (Content-Type: <file type>) - MUST use raw file content
-    $body .= $delimiter;
-    $body .= 'Content-Type: ' . $contentType . "\r\n\r\n";
-    $body .= $fileContent; // **THIS IS THE KEY CHANGE: NO base64_encode()**
-    
-    $body .= $close; // Closing delimiter
-    
-    // Upload using multipart
-    $url = "https://www.googleapis.com/upload/storage/v1/b/{$bucket}/o?uploadType=multipart";
+    // 3RD FIX ATTEMPT: Use Firebase Storage REST API instead of Google Cloud Storage API
+    // This respects current Firebase Storage rules
+    $encodedPath = rawurlencode($storagePath);
+    $url = "https://firebasestorage.googleapis.com/v0/b/{$bucket}/o?name={$encodedPath}";
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $fileContent);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        // Content-Type MUST be 'multipart/related' for Google's API
-        'Content-Type: multipart/related; boundary=' . $boundary,
-        'Content-Length: ' . strlen($body)
+        'Content-Type: ' . $contentType,
+        'Content-Length: ' . strlen($fileContent)
     ]);
-    // The rest of the function remains the same...
-
+    
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
     curl_close($ch);
     
-    // ... (rest of your error handling and success logic) ...
-
     if ($error) {
         return ['success' => false, 'error' => 'Upload failed: ' . $error];
     }
@@ -158,8 +136,7 @@ function upload_to_firebase_storage($localFilePath, $storagePath) {
         return ['success' => false, 'error' => 'Upload successful but no file name returned'];
     }
     
-    // Generate public URL
-    $encodedPath = urlencode($storagePath);
+    // Generate public download URL
     $downloadUrl = "https://firebasestorage.googleapis.com/v0/b/{$bucket}/o/{$encodedPath}?alt=media";
     
     return [

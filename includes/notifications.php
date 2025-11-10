@@ -134,7 +134,7 @@ function send_email_notification($toEmail, $postTitle, $postContent, $postUrl) {
             </div>
             <div class='footer'>
                 <p><strong>USIC-UPTM Student Information Center</strong></p>
-                <p>You received this email because you're subscribed to university announcements.</p>
+                <p>You received this email because you signup to USIC.</p>
             </div>
         </div>
     </body>
