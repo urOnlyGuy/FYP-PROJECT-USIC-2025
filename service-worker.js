@@ -49,6 +49,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     // Skip chrome extensions and non-http(s) requests
     if (!event.request.url.startsWith('http')) {
+        return;
+    }
+
+    // IMPORTANT FIX: Don't intercept navigation requests (redirects)
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request)
+            .catch(() => {
+                return caches.match('/offline.html');
+            })
+        );
       return;
     }
   

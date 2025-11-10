@@ -15,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($role) {
             case 'admin':
             case 'staff':
-                header('Location: /admin/dashboard.php');
+                header('Location: ../admin/dashboard.php');
                 break;
             case 'student':
             default:
-                header('Location: /student/dashboard.php');
+                header('Location: ../student/dashboard.php');
                 break;
         }
         exit;
