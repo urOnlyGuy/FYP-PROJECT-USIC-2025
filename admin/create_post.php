@@ -296,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return false;
             }
 
-            // START **NEW: Validate TinyMCE content** by gemini
+            // START **NEW: Validate TinyMCE content**
             // tinymce.get('content') gets the editor instance
             const editor = tinymce.get('content');
             if (editor && editor.getContent().trim() === '') {

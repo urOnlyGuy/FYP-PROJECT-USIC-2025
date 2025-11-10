@@ -28,14 +28,28 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
 }
 
 // Get all posts
-$posts = get_all_posts();
+$allPosts = get_all_posts();
+$posts = $allPosts;
 
 // Get filter
 $filterCategory = $_GET['category'] ?? 'all';
 if ($filterCategory !== 'all') {
-    $posts = array_filter($posts, function($post) use ($filterCategory) {
-        return $post['category'] === $filterCategory;
+    $posts = array_filter($allPosts, function($post) use ($filterCategory) {
+        return isset($post['category']) && $post['category'] === $filterCategory;
     });
+}
+
+// Get statistics
+$totalPosts = count($allPosts);
+$totalViews = array_sum(array_column($allPosts, 'viewCount'));
+$users = firebase_get('users');
+$totalStudents = 0;
+if ($users) {
+    foreach ($users as $user) {
+        if (isset($user['role']) && $user['role'] === 'student') {
+            $totalStudents++;
+        }
+    }
 }
 
 // Get statistics
@@ -57,7 +71,7 @@ if ($users) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | USIC - UPTM Student Info Center</title>
-    <?php include __DIR__ . '/../includes/pwa_head.php'; ?>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
