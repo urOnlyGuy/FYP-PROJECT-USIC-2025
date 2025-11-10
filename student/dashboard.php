@@ -114,7 +114,7 @@ $unreadCount = get_unread_count($_SESSION['user_id']);
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="favourite.php">
+                        <a class="nav-link" href="favourites.php">
                             <i class="bi bi-star-fill"></i> Favourites
                         </a>
                     </li>

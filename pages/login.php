@@ -10,7 +10,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = $result['message'];
 
     if ($result['success']) {
-        header('Location: /admin/dashboard.php');
+        // Role-based redirect
+        $role = $_SESSION['role'] ?? 'student';
+        switch ($role) {
+            case 'admin':
+            case 'staff':
+                header('Location: /admin/dashboard.php');
+                break;
+            case 'student':
+            default:
+                header('Location: /student/dashboard.php');
+                break;
+        }
         exit;
     }
 }
