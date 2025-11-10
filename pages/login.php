@@ -374,7 +374,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </p>
                     </div>
                 </div>
-                
+                <div class="text-center mt-3">
+                    <small class="text-white">
+                        <a href="faq.php" class="text-white text-decoration-none">
+                            <i class="bi bi-question-circle me-1"></i>
+                            Need help? Visit our FAQ
+                        </a>
+                    </small>
+                </div>
                 <div class="text-center mt-3" style="display:none;">
                     <div class="footer-badge">
                         <small class="text-white">

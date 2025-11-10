@@ -219,11 +219,43 @@ function get_post($postId) {
 
 //Update post
 function update_post($postId, $postData) {
-    return firebase_put('posts/' . $postId, $postData);
+    $existingPost = get_post($postId);
+    
+    if (!$existingPost) {
+        return ['success' => false, 'error' => 'Post not found'];
+    }
+    
+    // Preserve certain fields
+    $postData['createdAt'] = $existingPost['createdAt'];
+    $postData['createdBy'] = $existingPost['createdBy'];
+    $postData['viewCount'] = $existingPost['viewCount'] ?? 0;
+    $postData['updatedAt'] = time();
+    
+    $result = firebase_put('posts/' . $postId, $postData);
+    
+    if ($result) {
+        return ['success' => true];
+    }
+    
+    return ['success' => false, 'error' => 'Failed to update post'];
 }
 
 //Delete post
 function delete_post($postId) {
+    $post = get_post($postId);
+    
+    if (!$post) {
+        return false;
+    }
+    
+    // Optional: Delete associated files from storage
+    // if (isset($post['headerImage'])) {
+    //     // Extract storage path and delete
+    // }
+    // if (isset($post['attachmentUrl'])) {
+    //     // Extract storage path and delete
+    // }
+    
     return firebase_delete('posts/' . $postId);
 }
 
@@ -289,6 +321,107 @@ function get_user_favorites($userId) {
     }
     
     return $favoritePosts;
+}
+
+// =====================
+// FAQ CATEGORY MANAGEMENT
+// =====================
+
+/**
+ * Create FAQ category
+ */
+function create_faq_category($categoryData) {
+    $categoryId = 'faq_cat_' . uniqid() . '_' . time();
+    
+    $category = [
+        'name' => $categoryData['name'],
+        'icon' => $categoryData['icon'] ?? 'bi-question-circle',
+        'emoji' => $categoryData['emoji'] ?? '❓',
+        'order' => $categoryData['order'] ?? 999,
+        'isActive' => $categoryData['isActive'] ?? true,
+        'createdAt' => time(),
+        'createdBy' => $categoryData['createdBy']
+    ];
+    
+    $result = firebase_put('faq_categories/' . $categoryId, $category);
+    
+    if ($result) {
+        return ['success' => true, 'categoryId' => $categoryId];
+    }
+    
+    return ['success' => false, 'error' => 'Failed to create category'];
+}
+
+/**
+ * Get all FAQ categories
+ */
+function get_all_faq_categories($activeOnly = false) {
+    $categories = firebase_get('faq_categories');
+    
+    if (!$categories) return [];
+    
+    $categoryArray = [];
+    foreach ($categories as $id => $category) {
+        if ($activeOnly && !($category['isActive'] ?? true)) {
+            continue;
+        }
+        $category['id'] = $id;
+        $categoryArray[] = $category;
+    }
+    
+    // Sort by order
+    usort($categoryArray, function($a, $b) {
+        return ($a['order'] ?? 999) - ($b['order'] ?? 999);
+    });
+    
+    return $categoryArray;
+}
+
+/**
+ * Get single FAQ category
+ */
+function get_faq_category($categoryId) {
+    $category = firebase_get('faq_categories/' . $categoryId);
+    
+    if ($category) {
+        $category['id'] = $categoryId;
+    }
+    
+    return $category;
+}
+
+/**
+ * Update FAQ category
+ */
+function update_faq_category($categoryId, $categoryData) {
+    $existing = get_faq_category($categoryId);
+    
+    if (!$existing) {
+        return ['success' => false, 'error' => 'Category not found'];
+    }
+    
+    $result = firebase_put('faq_categories/' . $categoryId, array_merge($existing, $categoryData));
+    
+    if ($result) {
+        return ['success' => true];
+    }
+    
+    return ['success' => false, 'error' => 'Failed to update category'];
+}
+
+/**
+ * Delete FAQ category
+ */
+function delete_faq_category($categoryId) {
+    // Check if any FAQs use this category
+    $faqs = get_all_faqs(false);
+    foreach ($faqs as $faq) {
+        if ($faq['category'] === $categoryId) {
+            return ['success' => false, 'error' => 'Cannot delete category with existing FAQs'];
+        }
+    }
+    
+    return firebase_delete('faq_categories/' . $categoryId);
 }
 
 // =====================
@@ -399,43 +532,5 @@ function update_faq($faqId, $faqData) {
  */
 function delete_faq($faqId) {
     return firebase_delete('faqs/' . $faqId);
-}
-
-/**
- * Get FAQ categories
- */
-function get_faq_categories() {
-    return [
-        'getting_started' => [
-            'name' => 'Getting Started',
-            'icon' => 'bi-rocket-takeoff-fill',
-            'emoji' => '🚀'
-        ],
-        'posts_announcements' => [
-            'name' => 'Posts & Announcements',
-            'icon' => 'bi-megaphone-fill',
-            'emoji' => '📢'
-        ],
-        'favorites_notifications' => [
-            'name' => 'Favorites & Notifications',
-            'icon' => 'bi-star-fill',
-            'emoji' => '⭐'
-        ],
-        'mobile_pwa' => [
-            'name' => 'Mobile App & PWA',
-            'icon' => 'bi-phone-fill',
-            'emoji' => '📱'
-        ],
-        'troubleshooting' => [
-            'name' => 'Troubleshooting',
-            'icon' => 'bi-tools',
-            'emoji' => '🔧'
-        ],
-        'admin_staff' => [
-            'name' => 'For Admin & Staff',
-            'icon' => 'bi-person-badge-fill',
-            'emoji' => '👨‍💼'
-        ]
-    ];
 }
 ?>

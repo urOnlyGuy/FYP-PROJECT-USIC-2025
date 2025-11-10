@@ -3,17 +3,25 @@ require_once '../includes/auth.php';
 require_once '../includes/firebase.php';
 
 // Optional: Check if user is logged in
-//$isLoggedIn = is_logged_in();
-//$userRole = $isLoggedIn ? ($_SESSION['role'] ?? 'student') : null;
+$isLoggedIn = is_logged_in();
+$userRole = $isLoggedIn ? ($_SESSION['role'] ?? 'student') : null;
 
 // Get all active FAQs from database
 $allFaqs = get_all_faqs(true); // Only active FAQs
-$categories = get_faq_categories();
+
+// FIXED: Changed from get_faq_categories() to get_all_faq_categories()
+$categories = get_all_faq_categories(true); // Only active categories
 
 // Group FAQs by category
 $faqsByCategory = [];
 foreach ($allFaqs as $faq) {
     $faqsByCategory[$faq['category']][] = $faq;
+}
+
+// Create category lookup for easier access
+$categoryLookup = [];
+foreach ($categories as $cat) {
+    $categoryLookup[$cat['id']] = $cat;
 }
 ?>
 <!DOCTYPE html>
@@ -313,15 +321,18 @@ foreach ($allFaqs as $faq) {
                 <p class="text-muted">Check back soon for helpful information!</p>
             </div>
         <?php else: ?>
-            <?php foreach ($categories as $categoryId => $category): ?>
-                <?php if (isset($faqsByCategory[$categoryId]) && !empty($faqsByCategory[$categoryId])): ?>
+            <?php foreach ($categories as $category): ?>
+                <?php 
+                $categoryId = $category['id'];
+                if (isset($faqsByCategory[$categoryId]) && !empty($faqsByCategory[$categoryId])): 
+                ?>
                     <div class="category-section" data-category="<?= $categoryId ?>">
                         <h2 class="category-title">
-                            <i class="<?= $category['icon'] ?>"></i>
-                            <?= $category['emoji'] ?> <?= $category['name'] ?>
+                            <i class="<?= htmlspecialchars($category['icon']) ?>"></i>
+                            <?= htmlspecialchars($category['emoji']) ?> <?= htmlspecialchars($category['name']) ?>
                         </h2>
                         
-                        <div class="accordion" id="accordion<?= ucfirst($categoryId) ?>">
+                        <div class="accordion" id="accordion<?= $categoryId ?>">
                             <?php foreach ($faqsByCategory[$categoryId] as $index => $faq): ?>
                                 <div class="accordion-item faq-item" 
                                      data-question="<?= strtolower($faq['question']) ?>"
@@ -338,7 +349,7 @@ foreach ($allFaqs as $faq) {
                                     </h3>
                                     <div id="collapse<?= $categoryId . $index ?>" 
                                          class="accordion-collapse collapse" 
-                                         data-bs-parent="#accordion<?= ucfirst($categoryId) ?>">
+                                         data-bs-parent="#accordion<?= $categoryId ?>">
                                         <div class="accordion-body">
                                             <?= $faq['answer'] ?>
                                         </div>

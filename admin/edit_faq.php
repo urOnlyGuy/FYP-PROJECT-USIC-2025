@@ -23,12 +23,12 @@ if (!$faq) {
 
 $message = '';
 $messageType = '';
-$categories = get_faq_categories();
+$categories = get_all_faq_categories(false); // Include inactive to show current if inactive
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $question = trim($_POST['question']);
-    $answer = trim($_POST['answer']);
+    $answer = $_POST['answer'];
     $category = $_POST['category'];
     $order = intval($_POST['order']);
     $isActive = isset($_POST['is_active']);
@@ -70,6 +70,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include __DIR__ . '/../includes/pwa_head.php'; ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- TinyMCE Rich Text Editor -->
+    <script src="https://cdn.tiny.cloud/1/<?= getenv('TINYMCE_API_KEY') ?: 'no-api-key' ?>/tinymce/6/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        tinymce.init({
+            selector: '#answer',
+            height: 400,
+            menubar: false,
+            plugins: [
+                'lists', 'link', 'charmap', 'preview',
+                'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'table', 'help', 'wordcount'
+            ],
+            toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link | removeformat | code | help',
+            content_style: 'body { font-family:Arial,sans-serif; font-size:14px }'
+        });
+    </script>
 </head>
 <body class="bg-light">
     <!-- Navbar -->
@@ -104,14 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         <?php endif; ?>
 
-                        <form method="POST">
+                        <form method="POST" id="editFaqForm">
                             <!-- Category -->
                             <div class="mb-3">
                                 <label class="form-label">Category <span class="text-danger">*</span></label>
                                 <select name="category" class="form-select" required>
-                                    <?php foreach ($categories as $catId => $cat): ?>
-                                        <option value="<?= $catId ?>" <?= $faq['category'] === $catId ? 'selected' : '' ?>>
-                                            <?= $cat['emoji'] ?> <?= $cat['name'] ?>
+                                    <?php foreach ($categories as $cat): ?>
+                                        <option value="<?= $cat['id'] ?>" <?= $faq['category'] === $cat['id'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($cat['emoji']) ?> <?= htmlspecialchars($cat['name']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -128,16 +145,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                        maxlength="500">
                             </div>
 
-                            <!-- Answer -->
+                            <!-- Answer (TinyMCE) -->
                             <div class="mb-3">
                                 <label class="form-label">Answer <span class="text-danger">*</span></label>
-                                <textarea name="answer" 
-                                          class="form-control" 
-                                          rows="8"
-                                          required><?= htmlspecialchars($faq['answer']) ?></textarea>
-                                <small class="text-muted">
-                                    You can use basic HTML: &lt;strong&gt;, &lt;br&gt;, &lt;a href=""&gt;, &lt;ul&gt;, &lt;li&gt;
-                                </small>
+                                <textarea id="answer" name="answer"><?= htmlspecialchars($faq['answer']) ?></textarea>
                             </div>
 
                             <!-- Order -->
@@ -196,5 +207,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form validation
+        document.getElementById('editFaqForm').addEventListener('submit', function(e) {
+            const editor = tinymce.get('answer');
+            
+            if (editor && editor.getContent().trim() === '') {
+                e.preventDefault();
+                alert('Answer cannot be empty.');
+                editor.focus();
+                return false;
+            }
+        });
+    </script>
 </body>
 </html>

@@ -79,7 +79,7 @@ if ($users) {
                     <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['email']) ?>
                     <span class="badge bg-warning text-dark"><?= strtoupper($_SESSION['role']) ?></span>
                 </span>
-                <a href="manage_faq.php" class="btn btn-outline-primary btn-sm">
+                <a href="manage_faq.php" class="btn btn-outline-light btn-sm">
                     <i class="bi bi-question-circle"></i> Manage FAQ
                 </a>
                 <a href="../pages/logout.php" class="btn btn-outline-light btn-sm">
@@ -231,18 +231,26 @@ if ($users) {
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <a href="../student/post.php?id=<?= $post['id'] ?>" 
-                                               class="btn btn-sm btn-outline-primary"
-                                               title="View Post">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a href="?action=delete&id=<?= $post['id'] ?>" 
-                                               class="btn btn-sm btn-outline-danger"
-                                               onclick="return confirm('Are you sure you want to delete this post?')"
-                                               title="Delete Post">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
-                                        </td>
+											<div class="btn-group btn-group-sm">
+												<a href="../student/post.php?id=<?= $post['id'] ?>" 
+												class="btn btn-outline-primary"
+												title="View Post"
+												target="_blank">
+													<i class="bi bi-eye"></i>
+												</a>
+												<a href="edit_post.php?id=<?= $post['id'] ?>" 
+												class="btn btn-outline-warning"
+												title="Edit Post">
+													<i class="bi bi-pencil"></i>
+												</a>
+												<a href="?action=delete&id=<?= $post['id'] ?>" 
+												class="btn btn-outline-danger"
+												onclick="return confirm('Are you sure you want to delete this post? This action cannot be undone.')"
+												title="Delete Post">
+													<i class="bi bi-trash"></i>
+												</a>
+											</div>
+										</td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

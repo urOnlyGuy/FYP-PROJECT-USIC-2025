@@ -43,7 +43,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'toggle' && isset($_GET['id'])
 
 // Get all FAQs (including inactive)
 $allFaqs = get_all_faqs(false);
-$categories = get_faq_categories();
+
+// CHANGED: Get dynamic categories instead of hardcoded array
+$categories = get_all_faq_categories(false);
+
+// ADDED: Create a lookup array for category info
+$categoryLookup = [];
+foreach ($categories as $cat) {
+    $categoryLookup[$cat['id']] = $cat;
+}
 
 // Get filter
 $filterCategory = $_GET['category'] ?? 'all';
@@ -111,6 +119,9 @@ if ($filterCategory !== 'all') {
                 <a href="create_faq.php" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Add New FAQ
                 </a>
+                <a href="manage_faq_categories.php" class="btn btn-outline-secondary">
+                    <i class="bi bi-tags"></i> Manage Categories
+                </a>
                 <a href="../pages/faq.php" class="btn btn-outline-secondary" target="_blank">
                     <i class="bi bi-eye"></i> View Public FAQ
                 </a>
@@ -120,16 +131,19 @@ if ($filterCategory !== 'all') {
         <!-- Filter Buttons -->
         <div class="card mb-4">
             <div class="card-body">
+                <!-- CHANGED: Dynamic filter buttons based on database categories -->
                 <div class="btn-group d-flex flex-wrap" role="group">
                     <a href="?category=all" 
                        class="btn btn-sm btn-outline-primary <?= $filterCategory === 'all' ? 'active' : '' ?> flex-fill">
                         All Categories
                     </a>
-                    <?php foreach ($categories as $catId => $cat): ?>
-                        <a href="?category=<?= $catId ?>" 
-                           class="btn btn-sm btn-outline-primary <?= $filterCategory === $catId ? 'active' : '' ?> flex-fill">
-                            <?= $cat['emoji'] ?> <?= $cat['name'] ?>
-                        </a>
+                    <?php foreach ($categories as $cat): ?>
+                        <?php if ($cat['isActive'] ?? true): ?>
+                            <a href="?category=<?= $cat['id'] ?>" 
+                               class="btn btn-sm btn-outline-primary <?= $filterCategory === $cat['id'] ? 'active' : '' ?> flex-fill">
+                                <?= htmlspecialchars($cat['emoji']) ?> <?= htmlspecialchars($cat['name']) ?>
+                            </a>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -171,9 +185,10 @@ if ($filterCategory !== 'all') {
                                             <span class="badge bg-secondary"><?= $faq['order'] ?? 999 ?></span>
                                         </td>
                                         <td>
+                                            <!-- CHANGED: Use dynamic category lookup instead of hardcoded array -->
                                             <?php 
-                                            $cat = $categories[$faq['category']] ?? ['emoji' => '❓', 'name' => 'Unknown'];
-                                            echo $cat['emoji'] . ' ' . $cat['name'];
+                                            $cat = $categoryLookup[$faq['category']] ?? ['emoji' => '❓', 'name' => 'Unknown'];
+                                            echo htmlspecialchars($cat['emoji']) . ' ' . htmlspecialchars($cat['name']);
                                             ?>
                                         </td>
                                         <td>

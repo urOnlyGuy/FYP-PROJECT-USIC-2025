@@ -127,6 +127,11 @@ $unreadCount = get_unread_count($_SESSION['user_id']);
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="../pages/faq.php">
+                            <i class="bi bi-question-circle"></i> FAQ
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="../pages/logout.php">
                             <i class="bi bi-box-arrow-right"></i> Logout
                         </a>
